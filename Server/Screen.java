@@ -2,6 +2,8 @@ package Server;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
+import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -32,11 +34,13 @@ public class Screen extends JFrame implements ActionListener {
         titleLabel = new JLabel("Server Control");
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         titleLabel.setFont(new Font("Arial", Font.BOLD, 30));
-        titleLabel.setForeground(Color.BLUE); // Màu chữ trắng
+        titleLabel.setForeground(Color.BLUE);
         titlePanel.add(titleLabel, BorderLayout.NORTH);
 
-        ipLabel = new JLabel("IP: "+ SocketControl.getThisIP());
-        titlePanel.add(ipLabel, BorderLayout.CENTER);
+        ipLabel = new JLabel("IP: " + SocketControl.getThisIP());
+        ipLabel.setBorder(BorderFactory.createEmptyBorder(10, 20, 0, 10)); 
+        ipLabel.setForeground(Color.RED);
+        titlePanel.add(ipLabel, BorderLayout.SOUTH);
 
         mainContent.add(titlePanel, BorderLayout.NORTH);
 
@@ -83,7 +87,24 @@ public class Screen extends JFrame implements ActionListener {
         JPanel tablePanel = new JPanel(new BorderLayout());
         clientTable = new JTable(new Object[][]{}, new String[]{"Tên client", "Port client"});
         JScrollPane clientScrollPane = new JScrollPane(clientTable);
-        clientScrollPane.setBorder(BorderFactory.createTitledBorder("Danh sách client đang kết nối"));
+        clientScrollPane.setBorder(BorderFactory.createTitledBorder("List Client Connected"));
+
+        ((DefaultTableCellRenderer) clientTable.getDefaultRenderer(Object.class)).setHorizontalAlignment(SwingConstants.CENTER);
+        clientTable.setGridColor(Color.BLACK);
+
+        // Set grid lines visibility
+        clientTable.setShowGrid(true);
+        clientTable.setShowHorizontalLines(true);
+        clientTable.setShowVerticalLines(true);
+
+        JTableHeader header = clientTable.getTableHeader();
+        header.setDefaultRenderer(new DefaultTableCellRenderer(){
+           {
+             setHorizontalAlignment(JLabel.CENTER);
+             setBackground(new Color(30, 144, 255));
+             setForeground(Color.white);
+           }
+        });
 
         tablePanel.add(clientScrollPane, BorderLayout.CENTER);
 
@@ -106,8 +127,6 @@ public class Screen extends JFrame implements ActionListener {
 
         mainContent.add(buttonPanel, BorderLayout.SOUTH);
 
-        // Thay đổi màu sắc và font chữ
-        ipLabel.setForeground(new Color(30, 144, 255));
         portLabel.setForeground(new Color(30, 144, 255));
         serverNameLabel.setForeground(new Color(30, 144, 255));
         openCloseButton.setBackground(new Color(30, 144, 255));
@@ -140,15 +159,6 @@ public class Screen extends JFrame implements ActionListener {
 
         Main.socketControl = new SocketControl();
 
-
-        this.setTitle("Server Chat");
-        this.setContentPane(mainContent);
-        this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        this.pack();
-        this.setLocationRelativeTo(null);
-        this.setVisible(true);
-
-        Main.socketControl = new SocketControl();
     }
 
     @Override
