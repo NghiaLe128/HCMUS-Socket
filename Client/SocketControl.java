@@ -2,7 +2,9 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.JOptionPane;
@@ -24,13 +26,17 @@ public class SocketControl {
 	Thread receiveAndProcessThread;
 
 	public List<String> onlineUsers;
+	public List<String> usersWithAccounts;
+
 	public List<Room> allRooms;
+	public String downloadToPath;
 
 	List<Integer> savedRoomIDs;
 	List<String> userMessages;
 
 	public SocketControl(String name, String password, DataServer connectedServer) {
 		onlineUsers = new ArrayList<String>();
+		usersWithAccounts = new ArrayList<String>();
 		allRooms = new ArrayList<Room>();
 		savedRoomIDs = new ArrayList<>();
 		userMessages = new ArrayList<>();
@@ -49,9 +55,10 @@ public class SocketControl {
 			Main.connectServer.loginResultAction("closed");
 		}
 	}
-	public SocketControl(String fullName, String email, String phone, String name, String password, DataServer connectedServer) {
-		userMessages = new ArrayList<>();
 
+	public SocketControl(String fullName, String email, String phone, String name, String password,
+			DataServer connectedServer) {
+		userMessages = new ArrayList<>();
 
 		try {
 			this.fullName = fullName;
@@ -74,12 +81,12 @@ public class SocketControl {
 	public void Login() {
 		try {
 			sender.write("new login");
-            sender.newLine();
-            sender.write(userName);
-            sender.newLine();
-            sender.write(password);
-            sender.newLine();
-            sender.flush();
+			sender.newLine();
+			sender.write(userName);
+			sender.newLine();
+			sender.write(password);
+			sender.newLine();
+			sender.flush();
 
 			String loginResult = receiver.readLine();
 			if (loginResult.equals("login success")) {
@@ -91,6 +98,9 @@ public class SocketControl {
 
 				Main.mainScreen.updateDataServer();
 				Main.mainScreen.updateOnlineUserJList();
+				Main.mainScreen.updateRegisteredUserList();
+				getGroups();
+				//Main.mainScreen.updateGroupJList();
 
 				receiveAndProcessThread = new Thread(() -> {
 					try {
@@ -101,82 +111,112 @@ public class SocketControl {
 								throw new IOException();
 
 							switch (header) {
-							case "new user online": {
-								String who = receiver.readLine();
-								onlineUsers.add(who);
-								Main.mainScreen.updateDataServer();
-								Main.mainScreen.updateOnlineUserJList();
-								break;
-							}
-							case "user quit": {
-								String username = receiver.readLine();
-								String whoQuit = receiver.readLine();
-								onlineUsers.remove(whoQuit);
-								Main.mainScreen.updateDataServer();
-								Main.mainScreen.updateOnlineUserJList();
-								for (Room room : allRooms) {
-									if (room.users.contains(whoQuit)) {
-										Main.mainScreen.addNewMessage(room.id, "notify", whoQuit, "Đã thoát ứng dụng");
-										room.users.remove(whoQuit);
-									}
+								case "new user online": {
+									String who = receiver.readLine();
+									onlineUsers.add(who);
+									Main.mainScreen.updateDataServer();
+									Main.mainScreen.updateOnlineUserJList();
+									break;
 								}
-								Main.mainScreen.updateRoomUsersJList();
+								case "user quit": {
+									String username = receiver.readLine();
+									String whoQuit = receiver.readLine();
+									onlineUsers.remove(whoQuit);
+									Main.mainScreen.updateDataServer();
+									Main.mainScreen.updateOnlineUserJList();
+									for (Room room : allRooms) {
+										if (room.users.contains(whoQuit)) {
+											Main.mainScreen.addNewMessage(room.id, "notify", whoQuit,
+													"Đã thoát ứng dụng");
+											room.users.remove(whoQuit);
+										}
+									}
+									Main.mainScreen.updateRoomUsersJList();
 
-								break;
-							}
-							case "new room": {
-								System.out.println("new");
-								int roomID = Integer.parseInt(receiver.readLine());
-								String whoCreate = receiver.readLine();
-								String name = receiver.readLine();
-								String type = receiver.readLine();
-								int roomUserCount = Integer.parseInt(receiver.readLine());
-								List<String> users = new ArrayList<String>();
-								for (int i = 0; i < roomUserCount; i++)
-									users.add(receiver.readLine());
+									break;
+								}
+								case "new room": {
+									System.out.println("new");
+									int roomID = Integer.parseInt(receiver.readLine());
+									String whoCreate = receiver.readLine();
+									String name = receiver.readLine();
+									String type = receiver.readLine();
+									int roomUserCount = Integer.parseInt(receiver.readLine());
+									List<String> users = new ArrayList<String>();
+									for (int i = 0; i < roomUserCount; i++)
+										users.add(receiver.readLine());
 
-								Room newRoom = new Room(roomID, name, type, users);
-								Main.socketControl.allRooms.add(newRoom);
-								Main.mainScreen.newRoomTab(newRoom);
-								Main.mainScreen.addNewMessage(newRoom.id, "notify", whoCreate,
-										type.equals("group") ? "Đã tạo group" : "Đã mở chat");
-								Main.mainScreen.updateGroupJList();
-								break;
-							}
-							case "join room": {
-								System.out.println("join");
-								int roomID = Integer.parseInt(receiver.readLine());
-								String whoCreate = receiver.readLine();
-								String name = receiver.readLine();
-								String type = receiver.readLine();
-								int roomUserCount = Integer.parseInt(receiver.readLine());
-								List<String> users = new ArrayList<String>();
-								for (int i = 0; i < roomUserCount; i++)
-									users.add(receiver.readLine());
+									Room newRoom = new Room(roomID, name, type, users);
+									Main.socketControl.allRooms.add(newRoom);
+									Main.mainScreen.newRoomTab(newRoom);
+									Main.mainScreen.addNewMessage(newRoom.id, "notify", whoCreate,
+											type.equals("group") ? "Đã tạo group" : "Đã mở chat");
+									Main.mainScreen.updateGroupJList();
+									break;
+								}
+								case "join room": {
+									System.out.println("join");
+									int roomID = Integer.parseInt(receiver.readLine());
+									String whoCreate = receiver.readLine();
+									String name = receiver.readLine();
+									String type = receiver.readLine();
+									int roomUserCount = Integer.parseInt(receiver.readLine());
+									List<String> users = new ArrayList<String>();
+									for (int i = 0; i < roomUserCount; i++)
+										users.add(receiver.readLine());
 
-								Room newRoom = new Room(roomID, name, type, users);
-								Main.socketControl.allRooms.add(newRoom);
-								Main.mainScreen.newRoomTab(newRoom);
-								Main.mainScreen.addNewMessage(newRoom.id, "notify", whoCreate,
-										type.equals("group") ? "Đã tạo group" : "Đã mở chat");
-								Main.mainScreen.updateGroupJList();
-								break;
-							}
+									Room newRoom = new Room(roomID, name, type, users);
+									Main.socketControl.allRooms.add(newRoom);
+									Main.mainScreen.newRoomTab(newRoom);
+									Main.mainScreen.addNewMessage(newRoom.id, "notify", whoCreate,
+											type.equals("group") ? "Đã tạo group" : "Đã mở chat");
+									Main.mainScreen.updateGroupJList();
+									break;
+								}
 
-							case "text from user to room": {
-								String user = receiver.readLine();
-								int roomID = Integer.parseInt(receiver.readLine());
-								String content = "";
-								char c;
-								do {
-									c = (char) receiver.read();
-									if (c != '\0')
-										content += c;
-								} while (c != '\0');
-								Main.mainScreen.addNewMessage(roomID, "text", user, content);
-								break;
+								case "text from user to room": {
+									String user = receiver.readLine();
+									int roomID = Integer.parseInt(receiver.readLine());
+									String content = "";
+									char c;
+									do {
+										c = (char) receiver.read();
+										if (c != '\0')
+											content += c;
+									} while (c != '\0');
+									Main.mainScreen.addNewMessage(roomID, "text", user, content);
+									break;
+								}
+								case "file from user to room": {
+									String user = receiver.readLine();
+									int roomID = Integer.parseInt(receiver.readLine());
+									String fileName = receiver.readLine();
+									System.out.println(
+											"Recevie file " + fileName + " from " + user + " to room " + roomID);
+									Main.mainScreen.addNewMessage(roomID, "file", user, fileName);
+									break;
+								}
+								case "response download file": {
+									int fileSize = Integer.parseInt(receiver.readLine());
+									File file = new File(downloadToPath);
+									byte[] buffer = new byte[1024];
+									InputStream in = s.getInputStream();
+									OutputStream out = new FileOutputStream(file);
+
+									int count;
+									int receivedFileSize = 0;
+									while ((count = in.read(buffer)) > 0) {
+										out.write(buffer, 0, count);
+										receivedFileSize += count;
+										if (receivedFileSize >= fileSize)
+											break;
+									}
+
+									out.close();
+									break;
+								}
+
 							}
-                        }
 						}
 					} catch (IOException e) {
 						JOptionPane.showMessageDialog(Main.mainScreen, "Server đã đóng, ứng dụng sẽ thoát", "Thông báo",
@@ -190,9 +230,9 @@ public class SocketControl {
 					}
 				});
 				receiveAndProcessThread.start();
-			} else if(loginResult.equals("Wrong")){
+			} else if (loginResult.equals("Wrong")) {
 				Main.connectServer.loginResultAction("wrong");
-			}else
+			} else
 				Main.connectServer.loginResultAction("existed");
 
 		} catch (IOException e1) {
@@ -204,32 +244,32 @@ public class SocketControl {
 		try {
 			sender.write("new register");
 			sender.newLine();
-            sender.write(fullName);
+			sender.write(fullName);
 			sender.newLine();
-            sender.write(email);
+			sender.write(email);
 			sender.newLine();
-            sender.write(phone);
-            sender.newLine();
-            sender.write(userName);
-            sender.newLine();
-            sender.write(password);
-            sender.newLine();
-            sender.flush();
+			sender.write(phone);
+			sender.newLine();
+			sender.write(userName);
+			sender.newLine();
+			sender.write(password);
+			sender.newLine();
+			sender.flush();
 
 			String registerResult = receiver.readLine();
 			if (registerResult.equals("registration success")) {
 				Main.connectServer.registerResultAction("success");
 
-			} else if(registerResult.equals("Existed")){
+			} else if (registerResult.equals("Existed")) {
 				Main.connectServer.registerResultAction("existed");
-			}else
+			} else
 				Main.connectServer.registerResultAction("closed");
 
 		} catch (IOException e1) {
 
 		}
 	}
-	
+
 	public void sendTextToRoom(int roomID, String content) {
 		try {
 			sender.write("text to room");
@@ -254,12 +294,12 @@ public class SocketControl {
 				sender.flush();
 
 			}
-	
+
 			// Interrupt the receiveAndProcessThread if it's running
 			if (receiveAndProcessThread != null && receiveAndProcessThread.isAlive()) {
 				receiveAndProcessThread.interrupt();
 			}
-	
+
 			// Optionally set the socket to null to indicate it's closed
 			s = null;
 
@@ -267,7 +307,7 @@ public class SocketControl {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void loadMessages(int roomID) {
 		try {
 			sender.write("load messages");
@@ -275,7 +315,8 @@ public class SocketControl {
 			sender.write("" + roomID);
 			sender.newLine();
 			sender.flush();
-	
+
+			
 			// Handle the response from the server (list of messages)
 			int messageCount = Integer.parseInt(receiver.readLine());
 			List<String> messages = new ArrayList<>();
@@ -285,15 +326,15 @@ public class SocketControl {
 
 			Room targetRoom = Room.findRoom(allRooms, roomID);
 
-        // Update the message list of the corresponding room
-        if (targetRoom != null) {
-            targetRoom.messages.clear(); // Clear existing messages
-            for (String message : messages) {
-                // Assuming you have a ChatData constructor that parses the message string
-                ChatData chatData = ChatData.parse(message);
-                targetRoom.addMessage(chatData);
-            }
-        }
+			// Update the message list of the corresponding room
+			if (targetRoom != null) {
+				targetRoom.messages.clear(); // Clear existing messages
+				for (String message : messages) {
+					// Assuming you have a ChatData constructor that parses the message string
+					ChatData chatData = ChatData.parse(message);
+					targetRoom.addMessage(chatData);
+				}
+			}
 
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -302,7 +343,7 @@ public class SocketControl {
 
 	public void createPrivateRoom(String otherUser) {
 		Room existingRoom = Room.findPrivateRoom(allRooms, otherUser);
-	
+
 		if (existingRoom != null) {
 			// Room already exists, no need to create a new one
 			System.out.println("Private room already exists for users " + userName + " and " + otherUser);
@@ -325,11 +366,65 @@ public class SocketControl {
 				ex.printStackTrace();
 			}
 		}
-		loadMessages(existingRoom.id);
+		if (existingRoom != null) {
+			loadMessages(existingRoom.id);
+		}
+
 	}
 
-	
-	
+	public void sendFileToRoom(int roomID, String fileName, String filePath) {
+		try {
+			System.out.println("Send file " + fileName + " to room " + roomID);
+
+			File file = new File(filePath);
+			Room room = Room.findRoom(allRooms, roomID);
+
+			sender.write("file to room");
+			sender.newLine();
+			sender.write("" + roomID);
+			sender.newLine();
+			sender.write("" + room.messages.size());
+			sender.newLine();
+			sender.write(fileName);
+			sender.newLine();
+			sender.write("" + file.length());
+			sender.newLine();
+			sender.flush();
+
+			byte[] buffer = new byte[1024];
+			InputStream in = new FileInputStream(file);
+			OutputStream out = s.getOutputStream();
+
+			int count;
+			while ((count = in.read(buffer)) > 0) {
+				out.write(buffer, 0, count);
+			}
+
+			in.close();
+			out.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void downloadFile(int roomID, int fileMessageIndex, String fileName, String downloadToPath) {
+
+		this.downloadToPath = downloadToPath;
+		try {
+			sender.write("request download file");
+			sender.newLine();
+			sender.write("" + roomID);
+			sender.newLine();
+			sender.write("" + fileMessageIndex);
+			sender.newLine();
+			sender.write(fileName);
+			sender.newLine();
+			sender.flush();
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		}
+	}
+
 	public void createGroup(String groupName, List<String> otherUsers) {
 
 		try {
@@ -351,6 +446,23 @@ public class SocketControl {
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		}
+	}
+
+	public List<String> getUsersWithAccounts() {
+		try {
+			sender.write("get users with accounts");
+			sender.newLine();
+			sender.flush();
+
+			int userCount = Integer.parseInt(receiver.readLine());
+			for (int i = 0; i < userCount; i++) {
+				usersWithAccounts.add(receiver.readLine());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+		return usersWithAccounts;
 	}
 
 	public static boolean serverOnline(String ip, int port) {
@@ -410,4 +522,89 @@ public class SocketControl {
 		}
 	}
 
+	public void getGroups() {
+	
+		try {
+			sender.write("get groups");
+			sender.newLine();
+			sender.flush();
+	
+			// Read the count of groups from the server
+			int groupCount = Integer.parseInt(receiver.readLine());
+	
+			// Read information for each group and add it to the list
+			for (int i = 0; i < groupCount; i++) {
+				int roomID = Integer.parseInt(receiver.readLine());
+				String name = receiver.readLine();
+				String type = receiver.readLine();
+				int userCount = Integer.parseInt(receiver.readLine());
+	
+				List<String> users = new ArrayList<>();
+				for (int j = 0; j < userCount; j++) {
+					users.add(receiver.readLine());
+				}
+	
+				Room group = new Room(roomID, name, type, users);
+				Main.socketControl.allRooms.add(group);
+
+				Main.mainScreen.newRoomTab(group);
+									Main.mainScreen.addNewMessage(group.id, "notify", group.name,
+											type.equals("group") ? "Đã tạo group" : "Đã mở chat");
+									Main.mainScreen.updateGroupJList();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	
+	}
+
+	public List<String> getChatHistory(int roomID) {
+		try {
+			sender.write("get chat history");
+			sender.newLine();
+			sender.write("" + roomID);
+			sender.newLine();
+			sender.flush();
+	
+			// Read the response from the server
+			String response = receiver.readLine();
+	
+			// Check if the response is a valid integer (chat history count)
+			try {
+				int messageCount = Integer.parseInt(response);
+				List<String> chatHistory = new ArrayList<>();
+	
+				// Read the individual messages
+				for (int i = 0; i < messageCount; i++) {
+					chatHistory.add(receiver.readLine());
+				}
+	
+				return chatHistory;
+			} catch (NumberFormatException e) {
+				System.err.println("Invalid chat history count format: " + response);
+				// Handle the case where the chat history count is not a valid integer
+				return Collections.emptyList();
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	
+	public void clearChatHistory(int roomID) {
+		try {
+			sender.write("clear chat history");
+			sender.newLine();
+			sender.write("" + roomID);
+			sender.newLine();
+			sender.flush();
+	
+			// Read the response from the server (confirmation message)
+			String confirmationMessage = receiver.readLine();
+			System.out.println(confirmationMessage); // Handle the confirmation message as needed
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }
