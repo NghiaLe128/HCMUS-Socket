@@ -2,6 +2,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayList;
 import java.util.List;
+
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
@@ -12,7 +13,7 @@ public class Screen extends JFrame implements ActionListener {
 
     GBCBuild gbc;
     JPanel mainContent;
-
+    
     private JList<String> connectedServerInfoJList;
 
     private JList<String> registeredUserJList;
@@ -27,6 +28,9 @@ public class Screen extends JFrame implements ActionListener {
     private JTextArea messageArea;
 
     private JButton logoutButton;
+    private JButton settingButton;
+
+    private JTextArea chatHistoryTextArea= new JTextArea();;
 
     public Screen() {
         initComponents();
@@ -76,11 +80,17 @@ public class Screen extends JFrame implements ActionListener {
         roomMessagesPanels = new ArrayList<>();
         roomUsersJList = new JList<>();
 
-        logoutButton = new JButton("Đăng Xuất");
+        logoutButton = new JButton("Logout");
         logoutButton.setBackground(new Color(255, 69, 0)); // Red-orange
         logoutButton.setForeground(Color.BLACK);
         logoutButton.setActionCommand("logout");
         logoutButton.addActionListener(this);
+
+        settingButton = new JButton("Setting");
+        settingButton.setBackground(new Color(70, 130, 180));  // Steel blue
+        settingButton.setForeground(Color.white);
+        settingButton.setActionCommand("setting");
+        settingButton.addActionListener(this);
     }
 
     private JList<String> createConnectedServerInfoList() {
@@ -316,9 +326,17 @@ public class Screen extends JFrame implements ActionListener {
         JSplitPane mainSplitpane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, leftPanel, roomSplitPane);
         mainContent.add(mainSplitpane, gbc.setGrid(1, 1).setWeight(1, 1));
     
-        mainContent.add(logoutButton,
-                gbc.setGrid(1, 2).setWeight(0, 0).setFill(GridBagConstraints.NONE).setAnchor(GridBagConstraints.SOUTH));
-    
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+
+        // Add a label for better separation
+        JLabel separatorLabel = new JLabel("   ");
+        buttonPanel.add(settingButton);
+        buttonPanel.add(separatorLabel);
+        buttonPanel.add(logoutButton);
+
+        mainContent.add(buttonPanel,
+                gbc.setGrid(1, 3).setWeight(0, 0).setFill(GridBagConstraints.HORIZONTAL).setAnchor(GridBagConstraints.SOUTH));
+
         SwingUtilities.invokeLater(() -> mainSplitpane.setDividerLocation(180));
     
         configureFrame(mainContent);
@@ -337,7 +355,7 @@ public class Screen extends JFrame implements ActionListener {
         UIManager.put("Button.font", customFont);
         UIManager.put("Label.font", customFont);
 
-        this.setPreferredSize(new Dimension(900, 600));
+        this.setPreferredSize(new Dimension(900, 700));
         this.setTitle("Ứng dụng chat đăng nhập với tên " + Main.socketControl.userName);
         this.setContentPane(mainContent);
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -521,7 +539,10 @@ public class Screen extends JFrame implements ActionListener {
                     Main.socketControl.sendFileToRoom(chattingRoom, fileName, filePath);
                 }
             }
-        }
+            case "setting": {
+                showSettingDialog();
+                break;
+            }}
     }
 
     private void handleLogout() {
@@ -579,6 +600,43 @@ public class Screen extends JFrame implements ActionListener {
         dispose();
     }
 
+    private void showSettingDialog() {
+        // Declare final variables to be used in inner classes
+        final JDialog settingDialog = new JDialog();
+        final JPanel settingContent = new JPanel(new GridBagLayout());
+        GBCBuild gbc = new GBCBuild(1, 1);
+    
+        JButton viewHistoryButton = new JButton("Xem lịch sử chat");
+        JButton clearHistoryButton = new JButton("Xoá lịch sử chat");
+    
+        viewHistoryButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+            }
+        });
+    
+        clearHistoryButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                
+            }
+        });
+        
+        settingContent.add(viewHistoryButton, gbc.setGrid(1, 1).setWeight(1, 0).setFill(GridBagConstraints.HORIZONTAL));
+        settingContent.add(clearHistoryButton, gbc.setGrid(1, 2).setWeight(1, 0).setFill(GridBagConstraints.HORIZONTAL));
+    
+        settingDialog.setContentPane(settingContent);
+        settingDialog.setTitle("Cài đặt");
+        settingDialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL); // Set modality type
+        settingDialog.pack();
+        settingDialog.setLocationRelativeTo(null);
+        settingDialog.setVisible(true);
+    }
+    
+    
+
+    
     public static class RoomMessagesPanel extends JPanel {
         private static final long serialVersionUID = 1L;
         public Room room;

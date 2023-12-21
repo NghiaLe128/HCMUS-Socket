@@ -27,6 +27,14 @@ public class ChatData implements Serializable {
 		isRead = read;
 	}
 
+	public String getSender(){
+		return this.whoSend;
+	}
+
+	public String getContent(){
+		return content;
+	}
+
 	private void writeObject(ObjectOutputStream out) throws IOException {
 		// Custom serialization logic
 		out.defaultWriteObject();
@@ -51,4 +59,19 @@ public class ChatData implements Serializable {
 			return null;
 		}
 	}
+
+	public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+
+        ChatData other = (ChatData) obj;
+
+        return whoSend.equals(other.whoSend) &&
+               type.equals(other.type) &&
+               content.equals(other.content);
+    }
 }

@@ -99,7 +99,6 @@ public class ClientThread extends Thread {
 					}
 					case "text to room": {
 						int roomID = Integer.parseInt(thisClient.receiver.readLine());
-						String receiver;
 						String content = "";
 						char c;
 						do {
@@ -111,7 +110,6 @@ public class ClientThread extends Thread {
 						Room room = Room.findRoom(Main.socketControl.allRooms, roomID);
 						for (String user : room.users) {
 							System.out.println("Send text from " + thisClient.userName + " to " + user);
-							receiver = user;
 							Client currentClient = Client.findClient(Main.socketControl.connectedClient, user);
 							if (currentClient != null) {
 								currentClient.sender.write("text from user to room");
@@ -224,16 +222,8 @@ public class ClientThread extends Thread {
 						handleGetGroups();
 						break;
 					}
-					case "get chat history": {
-						handleGetChatHistory();
-						break;
-					}
-
-					case "clear chat history": {
-						handleClearChatHistory();
-						break;
-					}
-				
+					
+					
 					default:
         				System.err.println("Unsupported header: " + header);
 				}
@@ -264,93 +254,6 @@ public class ClientThread extends Thread {
 				Main.mainScreen.updateClientTable();
 			}
 		}
-	}
-
-	private void handleGetChatHistory() throws IOException {
-		try {
-			int roomID = Integer.parseInt(thisClient.receiver.readLine());
-	
-			// Retrieve chat history for the specified room from the server
-			List<String> chatHistory = loadMessages(roomID);
-	
-			// Send the chat history count to the client
-			thisClient.sender.write("" + chatHistory.size());
-			thisClient.sender.newLine();
-			thisClient.sender.flush();
-	
-			// Send the individual messages to the client
-			for (String message : chatHistory) {
-				thisClient.sender.write(message);
-				thisClient.sender.newLine();
-				thisClient.sender.flush();
-			}
-		} catch (NumberFormatException e) {
-			System.err.println("Invalid room ID format");
-		}
-	}
-	
-	
-	
-	private void handleClearChatHistory() throws IOException {
-		try {
-			int roomID = Integer.parseInt(thisClient.receiver.readLine());
-	
-			// Clear chat history for the specified room on the server
-			boolean success = clearMessages(roomID);
-	
-			// Send confirmation message to the client
-			if (success) {
-				thisClient.sender.write("Chat history cleared successfully");
-			} else {
-				thisClient.sender.write("Failed to clear chat history");
-			}
-			thisClient.sender.newLine();
-			thisClient.sender.flush();
-		} catch (NumberFormatException e) {
-			System.err.println("Invalid room ID format");
-		}
-	}
-	
-
-	private void handleGetGroups() throws IOException {
-		// Get the groups (rooms with type "group")
-		List<Room> groups = getGroupsFromServer();
-	
-		// Send the count of groups to the client
-		thisClient.sender.write("" + groups.size());
-		thisClient.sender.newLine();
-	
-		// Send each group information to the client
-		for (Room group : groups) {
-			thisClient.sender.write("" + group.id);
-			thisClient.sender.newLine();
-			thisClient.sender.write(group.name);
-			thisClient.sender.newLine();
-			thisClient.sender.write(group.type);
-			thisClient.sender.newLine();
-			thisClient.sender.write("" + group.users.size());
-			thisClient.sender.newLine();
-			for (String user : group.users) {
-				thisClient.sender.write(user);
-				thisClient.sender.newLine();
-			}
-		}
-	
-		thisClient.sender.flush();
-	}
-	
-	private List<Room> getGroupsFromServer() {
-		// Implement the logic to retrieve groups (rooms with type "group") from your server or database
-		// Return a list of groups
-		List<Room> groups = new ArrayList<>();
-		// Add logic to fetch groups, e.g., from a list of all rooms
-		for (Room room : Main.socketControl.allRooms) {
-			if ("group".equals(room.type)) {
-				groups.add(room);
-			}
-		}
-	
-		return groups;
 	}
 	
 
@@ -607,6 +510,47 @@ public class ClientThread extends Thread {
 			thisClient.sender.newLine();
 		}
 		thisClient.sender.flush();
+	}
+
+	private void handleGetGroups() throws IOException {
+		// Get the groups (rooms with type "group")
+		List<Room> groups = getGroupsFromServer();
+	
+		// Send the count of groups to the client
+		thisClient.sender.write("" + groups.size());
+		thisClient.sender.newLine();
+	
+		// Send each group information to the client
+		for (Room group : groups) {
+			thisClient.sender.write("" + group.id);
+			thisClient.sender.newLine();
+			thisClient.sender.write(group.name);
+			thisClient.sender.newLine();
+			thisClient.sender.write(group.type);
+			thisClient.sender.newLine();
+			thisClient.sender.write("" + group.users.size());
+			thisClient.sender.newLine();
+			for (String user : group.users) {
+				thisClient.sender.write(user);
+				thisClient.sender.newLine();
+			}
+		}
+	
+		thisClient.sender.flush();
+	}
+	
+	private List<Room> getGroupsFromServer() {
+		// Implement the logic to retrieve groups (rooms with type "group") from your server or database
+		// Return a list of groups
+		List<Room> groups = new ArrayList<>();
+		// Add logic to fetch groups, e.g., from a list of all rooms
+		for (Room room : Main.socketControl.allRooms) {
+			if ("group".equals(room.type)) {
+				groups.add(room);
+			}
+		}
+	
+		return groups;
 	}
 
 	private void saveMessage(int roomID, String sender, String content) {

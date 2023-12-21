@@ -1,6 +1,7 @@
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Room implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -80,4 +81,11 @@ public class Room implements Serializable {
     public List<ChatData> getMessages() {
         return messages;
     }
+
+    public List<ChatData> getMessagesByUser(String username) {
+    return messages.stream()
+            .filter(message -> message.getSender().equals(username))
+            .collect(Collectors.toList());
+}
+
 }

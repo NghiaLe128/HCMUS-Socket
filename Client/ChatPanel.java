@@ -166,4 +166,7 @@ public class ChatPanel extends JPanel {
         }
     }
     
+    public ChatData getMessage() {
+        return this.data;
+    }
 }

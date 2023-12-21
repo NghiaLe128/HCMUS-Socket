@@ -119,7 +119,6 @@ public class SocketControl {
 									break;
 								}
 								case "user quit": {
-									String username = receiver.readLine();
 									String whoQuit = receiver.readLine();
 									onlineUsers.remove(whoQuit);
 									Main.mainScreen.updateDataServer();
@@ -558,53 +557,4 @@ public class SocketControl {
 	
 	}
 
-	public List<String> getChatHistory(int roomID) {
-		try {
-			sender.write("get chat history");
-			sender.newLine();
-			sender.write("" + roomID);
-			sender.newLine();
-			sender.flush();
-	
-			// Read the response from the server
-			String response = receiver.readLine();
-	
-			// Check if the response is a valid integer (chat history count)
-			try {
-				int messageCount = Integer.parseInt(response);
-				List<String> chatHistory = new ArrayList<>();
-	
-				// Read the individual messages
-				for (int i = 0; i < messageCount; i++) {
-					chatHistory.add(receiver.readLine());
-				}
-	
-				return chatHistory;
-			} catch (NumberFormatException e) {
-				System.err.println("Invalid chat history count format: " + response);
-				// Handle the case where the chat history count is not a valid integer
-				return Collections.emptyList();
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
-			return null;
-		}
-	}
-	
-	
-	public void clearChatHistory(int roomID) {
-		try {
-			sender.write("clear chat history");
-			sender.newLine();
-			sender.write("" + roomID);
-			sender.newLine();
-			sender.flush();
-	
-			// Read the response from the server (confirmation message)
-			String confirmationMessage = receiver.readLine();
-			System.out.println(confirmationMessage); // Handle the confirmation message as needed
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
 }
