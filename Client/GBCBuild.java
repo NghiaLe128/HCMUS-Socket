@@ -47,4 +47,9 @@ public class GBCBuild extends GridBagConstraints {
 		return this;
 	}
 
+	public GBCBuild setGridWidth(int gridwidth) {
+        this.gridwidth = gridwidth;
+        return this;
+    }
+
 }

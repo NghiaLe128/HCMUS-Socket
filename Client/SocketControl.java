@@ -100,7 +100,7 @@ public class SocketControl {
 				Main.mainScreen.updateOnlineUserJList();
 				Main.mainScreen.updateRegisteredUserList();
 				getGroups();
-				//Main.mainScreen.updateGroupJList();
+				// Main.mainScreen.updateGroupJList();
 
 				receiveAndProcessThread = new Thread(() -> {
 					try {
@@ -315,7 +315,6 @@ public class SocketControl {
 			sender.newLine();
 			sender.flush();
 
-			
 			// Handle the response from the server (list of messages)
 			int messageCount = Integer.parseInt(receiver.readLine());
 			List<String> messages = new ArrayList<>();
@@ -522,39 +521,39 @@ public class SocketControl {
 	}
 
 	public void getGroups() {
-	
+
 		try {
 			sender.write("get groups");
 			sender.newLine();
 			sender.flush();
-	
+
 			// Read the count of groups from the server
 			int groupCount = Integer.parseInt(receiver.readLine());
-	
+
 			// Read information for each group and add it to the list
 			for (int i = 0; i < groupCount; i++) {
 				int roomID = Integer.parseInt(receiver.readLine());
 				String name = receiver.readLine();
 				String type = receiver.readLine();
 				int userCount = Integer.parseInt(receiver.readLine());
-	
+
 				List<String> users = new ArrayList<>();
 				for (int j = 0; j < userCount; j++) {
 					users.add(receiver.readLine());
 				}
-	
+
 				Room group = new Room(roomID, name, type, users);
 				Main.socketControl.allRooms.add(group);
 
 				Main.mainScreen.newRoomTab(group);
-									Main.mainScreen.addNewMessage(group.id, "notify", group.name,
-											type.equals("group") ? "Đã tạo group" : "Đã mở chat");
-									Main.mainScreen.updateGroupJList();
+				Main.mainScreen.addNewMessage(group.id, "notify", group.name,
+						type.equals("group") ? "Đã tạo group" : "Đã mở chat");
+				Main.mainScreen.updateGroupJList();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	
+
 	}
 
 }

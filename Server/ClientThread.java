@@ -582,20 +582,4 @@ public class ClientThread extends Thread {
 		return messages;
 	}
 
-	private boolean clearMessages(int roomID) {
-		String fileName = "messages_" + roomID + ".txt";
-		File file = new File(fileName);
-	
-		// Check if the file exists
-		if (file.exists()) {
-			// Attempt to delete the file
-			boolean deleted = file.delete();
-	
-			// Return true if the file was successfully deleted, false otherwise
-			return deleted;
-		} else {
-			// If the file doesn't exist, consider it as cleared
-			return true;
-		}
-	}
 }

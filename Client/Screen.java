@@ -601,14 +601,14 @@ public class Screen extends JFrame implements ActionListener {
     }
 
     private void showSettingDialog() {
-        // Declare final variables to be used in inner classes
         final JDialog settingDialog = new JDialog();
         final JPanel settingContent = new JPanel(new GridBagLayout());
         GBCBuild gbc = new GBCBuild(1, 1);
     
-        JButton viewHistoryButton = new JButton("Xem lịch sử chat");
-        JButton clearHistoryButton = new JButton("Xoá lịch sử chat");
-    
+        JButton viewHistoryButton = createStyledButton("View History");
+        JButton clearHistoryButton = createStyledButton("Clear History");
+        JButton backButton = createStyledButton("Back");
+
         viewHistoryButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -623,18 +623,37 @@ public class Screen extends JFrame implements ActionListener {
             }
         });
         
-        settingContent.add(viewHistoryButton, gbc.setGrid(1, 1).setWeight(1, 0).setFill(GridBagConstraints.HORIZONTAL));
-        settingContent.add(clearHistoryButton, gbc.setGrid(1, 2).setWeight(1, 0).setFill(GridBagConstraints.HORIZONTAL));
-    
+        backButton.setPreferredSize(new Dimension(80, 30)); 
+        backButton.addActionListener(e -> settingDialog.dispose());
+
+        settingContent.add(createTitleLabel("Settings"), gbc.setGrid(1, 0).setInsets(10, 0, 20, 0).setGridWidth(2));
+        settingContent.add(viewHistoryButton, gbc.setGrid(1, 1).setWeight(1, 0).setFill(GridBagConstraints.HORIZONTAL).setInsets(0, 0, 10, 0));
+        settingContent.add(clearHistoryButton, gbc.setGrid(1, 2).setWeight(1, 0).setFill(GridBagConstraints.HORIZONTAL).setInsets(0, 0, 10, 0));
+        settingContent.add(backButton, gbc.setGrid(1, 4).setWeight(1, 0).setFill(GridBagConstraints.VERTICAL));
+
+        // Set preferred width for the settingDialog
         settingDialog.setContentPane(settingContent);
-        settingDialog.setTitle("Cài đặt");
-        settingDialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL); // Set modality type
-        settingDialog.pack();
+        settingDialog.setTitle("Settings");
+        settingDialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+        settingDialog.setSize(500, 300); 
         settingDialog.setLocationRelativeTo(null);
         settingDialog.setVisible(true);
     }
     
+    private JButton createStyledButton(String text) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Arial", Font.PLAIN, 14));
+        button.setBackground(new Color(70, 130, 180)); // Navy Blue background
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false); // Remove border
+        return button;
+    }
     
+    private JLabel createTitleLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(new Font("Arial", Font.BOLD, 18));
+        return label;
+    }
 
     
     public static class RoomMessagesPanel extends JPanel {
