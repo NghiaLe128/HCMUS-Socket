@@ -608,21 +608,14 @@ public class Screen extends JFrame implements ActionListener {
         JButton viewHistoryButton = createStyledButton("View History");
         JButton clearHistoryButton = createStyledButton("Clear History");
         JButton backButton = createStyledButton("Back");
-
-        viewHistoryButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                
-            }
+    
+        viewHistoryButton.addActionListener(e -> {
+            List<ChatData> chatHistory = Main.socketControl.getUserMessages(chattingRoom);
+            showChatHistoryDialog(chatHistory, settingDialog);
         });
     
-        clearHistoryButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                
-            }
+        clearHistoryButton.addActionListener(e -> {
         });
-        
         backButton.setPreferredSize(new Dimension(80, 30)); 
         backButton.addActionListener(e -> settingDialog.dispose());
 
@@ -654,7 +647,55 @@ public class Screen extends JFrame implements ActionListener {
         label.setFont(new Font("Arial", Font.BOLD, 18));
         return label;
     }
+    
+    
+    private void showChatHistoryDialog(List<ChatData> chatHistory, final JDialog settingDialog) {
 
+        JDialog chatHistoryDialog = new JDialog();
+    
+        // Create a panel for the chat history and controls
+        JPanel chatHistoryPanel = new JPanel(new BorderLayout());
+    
+        chatHistoryTextArea.setText("");
+
+        // Populate the JTextArea with chat history
+        for (ChatData message : chatHistory) {
+            String formattedMessage = message.getSender() + ": " + message.getContent() + "\n";
+            chatHistoryTextArea.append(formattedMessage);
+        }
+    
+        chatHistoryTextArea.setEditable(false);
+    
+        // Add the chat history text area to a scroll pane
+        JScrollPane scrollPane = new JScrollPane(chatHistoryTextArea);
+        chatHistoryPanel.add(scrollPane, BorderLayout.CENTER);
+    
+        // Create a "Back" button to return to the settings dialog
+        JButton backButton = createStyledButton("Back");
+        backButton.addActionListener(e -> {
+            chatHistoryDialog.dispose();
+            settingDialog.setVisible(true);
+        });
+    
+        // Create a panel for the back button
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(backButton);
+    
+        // Add the button panel to the main chat history panel
+        chatHistoryPanel.add(buttonPanel, BorderLayout.SOUTH);
+    
+        chatHistoryDialog.add(chatHistoryPanel);
+        chatHistoryDialog.setTitle("Chat History");
+        chatHistoryDialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+        chatHistoryDialog.setSize(400, 300);
+        chatHistoryDialog.setLocationRelativeTo(null);
+        chatHistoryDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+        chatHistoryDialog.setVisible(true);
+
+        
+    
+    }
+    
     
     public static class RoomMessagesPanel extends JPanel {
         private static final long serialVersionUID = 1L;

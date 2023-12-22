@@ -556,4 +556,11 @@ public class SocketControl {
 
 	}
 
+	public List<ChatData> getUserMessages(int roomID) {
+		Room targetRoom = Room.findRoom(allRooms, roomID);
+		if (targetRoom != null) {
+			return targetRoom.getMessagesByUser(userName);
+		}
+		return Collections.emptyList();
+	}
 }
