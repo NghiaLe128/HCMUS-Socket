@@ -10,7 +10,6 @@
 
 ## II. Vị trí tập tin
 - Source code: thư mục src
-- File jar: HCMUS-Slang-Word.jar
 - Clip youtube: https://youtu.be/xpuh5D6QBKM
 - Github: https://github.com/NghiaLe128/HCMUS-Socket.git
 
