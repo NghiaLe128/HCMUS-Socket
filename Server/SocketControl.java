@@ -13,7 +13,6 @@ public class SocketControl {
 	public List<Client> connectedClient;
 	public List<Room> allRooms;
 
-	public List<Group> allGroups;
 
 
 	public void OpenSocket(int port) {
@@ -21,8 +20,6 @@ public class SocketControl {
 			s = new ServerSocket(port);
 			connectedClient = new ArrayList<Client>();
 			allRooms = new ArrayList<Room>();
-
-			allGroups= new ArrayList<Group>();
 
 			new Thread(() -> {
 				try {

@@ -222,7 +222,11 @@ public class ClientThread extends Thread {
 						handleGetGroups();
 						break;
 					}
-					
+				
+					case "delete message": {
+						handleDeleteMessage();
+						break;
+					}
 					
 					default:
         				System.err.println("Unsupported header: " + header);
@@ -255,7 +259,6 @@ public class ClientThread extends Thread {
 			}
 		}
 	}
-	
 
 	private void handleNewLogin() throws IOException {
 
@@ -389,10 +392,6 @@ public class ClientThread extends Thread {
 					} else {
 						currentClientSender.write(roomName);
 						currentClientSender.newLine();
-
-						Group newGroup = new Group(newRoom.id, roomName, roomType, users);
-						Main.socketControl.allGroups.add(newGroup);
-						newGroup.saveGroup(newGroup);
 					}
 					currentClientSender.write(roomType);
 					currentClientSender.newLine();
@@ -512,6 +511,27 @@ public class ClientThread extends Thread {
 		thisClient.sender.flush();
 	}
 
+	private void handleDeleteMessage() throws IOException {
+		try {
+			int roomID = Integer.parseInt(thisClient.receiver.readLine());
+			int messageIndex = Integer.parseInt(thisClient.receiver.readLine());
+	
+			// Perform the message deletion (e.g., remove the message from the file)
+			boolean success = deleteMessage(roomID, messageIndex);
+	
+			// Send confirmation message to the client
+			if (success) {
+				thisClient.sender.write("Message deleted successfully");
+			} else {
+				thisClient.sender.write("Failed to delete message");
+			}
+			thisClient.sender.newLine();
+			thisClient.sender.flush();
+		} catch (NumberFormatException e) {
+			System.err.println("Invalid room ID or message index format");
+		}
+	}
+
 	private void handleGetGroups() throws IOException {
 		// Get the groups (rooms with type "group")
 		List<Room> groups = getGroupsFromServer();
@@ -552,7 +572,7 @@ public class ClientThread extends Thread {
 	
 		return groups;
 	}
-
+	
 	private void saveMessage(int roomID, String sender, String content) {
 		String fileName = "messages_" + roomID + ".txt";
 		try (FileOutputStream fileOutputStream = new FileOutputStream(fileName, true);
@@ -582,4 +602,36 @@ public class ClientThread extends Thread {
 		return messages;
 	}
 
+	private boolean deleteMessage(int roomID, int messageIndex) {
+		String fileName = "messages_" + roomID + ".txt";
+		try (RandomAccessFile file = new RandomAccessFile(fileName, "rw")) {
+			// Read all lines from the file
+			List<String> lines = new ArrayList<>();
+			String line;
+			while ((line = file.readLine()) != null) {
+				lines.add(line);
+			}
+	
+			// Check if the message index is valid
+			if (messageIndex >= 0 && messageIndex < lines.size()) {
+				// Remove the specified message
+				lines.remove(messageIndex);
+	
+				// Rewrite the modified lines to the file
+				file.setLength(0); // Clear the file
+				for (String updatedLine : lines) {
+					file.writeBytes(updatedLine + System.lineSeparator());
+				}
+	
+				return true; // Deletion successful
+			} else {
+				// Invalid message index
+				return false;
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+			return false; // Failed to delete message
+		}
+	}
+	
 }

@@ -615,7 +615,63 @@ public class Screen extends JFrame implements ActionListener {
         });
     
         clearHistoryButton.addActionListener(e -> {
+            List<ChatData> chatHistory = Main.socketControl.getUserMessages(chattingRoom);
+            DefaultListModel<String> listModel = new DefaultListModel<>();
+        
+            for (ChatData message : chatHistory) {
+                String formattedMessage = message.getSender() + ": " + message.getContent();
+                listModel.addElement(formattedMessage);
+            }
+        
+            JList<String> chatHistoryList = new JList<>(listModel);
+            chatHistoryList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+            JScrollPane listScrollPane = new JScrollPane(chatHistoryList);
+        
+            JButton deleteButton = createStyledButton("Delete");
+            JButton backButtonn = createStyledButton("Back");
+        
+            JDialog chatHistoryDialog = new JDialog();
+        
+            deleteButton.addActionListener(e1 -> {
+                int selectedIndex = chatHistoryList.getSelectedIndex();
+        
+                if (chatHistoryList != null && selectedIndex != -1 && selectedIndex < chatHistory.size()) {
+                    ChatData removedMessage = chatHistory.remove(selectedIndex);
+        
+                    listModel.removeElementAt(selectedIndex);
+                    updateChatHistoryTextArea(chatHistory);
+        
+                    RoomMessagesPanel roomMessagesPanel = RoomMessagesPanel.findRoomMessagesPanel(roomMessagesPanels, chattingRoom);
+                    removeMessageFromPanel(roomMessagesPanel, removedMessage);
+        
+                    Main.socketControl.deleteMessage(chattingRoom, removedMessage);
+                }
+            });
+        
+            backButtonn.addActionListener(e1 -> {
+                chatHistoryDialog.dispose();
+                settingDialog.setVisible(true);
+            });
+        
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+            buttonPanel.add(backButtonn);
+            buttonPanel.add(deleteButton);
+        
+            JPanel listPanel = new JPanel(new BorderLayout());
+            listPanel.add(listScrollPane, BorderLayout.CENTER);
+            listPanel.add(buttonPanel, BorderLayout.SOUTH);
+        
+            chatHistoryDialog.setContentPane(listPanel);
+            chatHistoryDialog.setTitle("Chat History");
+            chatHistoryDialog.setModalityType(Dialog.ModalityType.APPLICATION_MODAL);
+            chatHistoryDialog.setSize(400, 300);
+            chatHistoryDialog.setLocationRelativeTo(null);
+            chatHistoryDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+            chatHistoryDialog.setVisible(true);
+
         });
+        
+    
         backButton.setPreferredSize(new Dimension(80, 30)); 
         backButton.addActionListener(e -> settingDialog.dispose());
 
@@ -647,7 +703,6 @@ public class Screen extends JFrame implements ActionListener {
         label.setFont(new Font("Arial", Font.BOLD, 18));
         return label;
     }
-    
     
     private void showChatHistoryDialog(List<ChatData> chatHistory, final JDialog settingDialog) {
 
@@ -696,6 +751,33 @@ public class Screen extends JFrame implements ActionListener {
     
     }
     
+    private void updateChatHistoryTextArea(List<ChatData> chatHistory) {
+        
+        chatHistoryTextArea.setText("");
+            for (ChatData message : chatHistory) {
+                String formattedMessage = message.getSender() + ": " + message.getContent() + "\n";
+                chatHistoryTextArea.append(formattedMessage);
+            }
+    }
+
+    public void removeMessageFromPanel(RoomMessagesPanel roomMessagesPanel, ChatData message) {
+        Component[] components = roomMessagesPanel.getComponents();
+    
+        for (Component component : components) {
+            if (component instanceof ChatPanel) {
+                ChatPanel chatPanel = (ChatPanel) component;
+    
+                if (chatPanel.getMessage().equals(message)) {
+                    roomMessagesPanel.remove(chatPanel);
+                    break; // Assuming each message is unique
+                }
+            }
+        }
+    
+        // Revalidate and repaint outside the inner loop to avoid redundant calls
+        roomMessagesPanel.revalidate();
+        roomMessagesPanel.repaint();
+    }
     
     public static class RoomMessagesPanel extends JPanel {
         private static final long serialVersionUID = 1L;

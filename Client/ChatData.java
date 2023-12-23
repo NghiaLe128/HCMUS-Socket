@@ -11,7 +11,6 @@ public class ChatData implements Serializable {
 	public String whoSend;
 	public String type;
 	public String content;
-	public boolean isRead = false;
 
 	public ChatData(String whoSend, String type, String content) {
 		this.whoSend = whoSend;
@@ -19,13 +18,6 @@ public class ChatData implements Serializable {
 		this.content = content;
 	}
 
-	public boolean isRead() {
-		return isRead;
-	}
-
-	public void setRead(boolean read) {
-		isRead = read;
-	}
 
 	public String getSender(){
 		return this.whoSend;

@@ -18,13 +18,6 @@ public class DatabaseHandler {
                     + "trustServerCertificate=false;"
                     + "loginTimeout=30;";
 
-     private static final String url1 = "jdbc:sqlserver://ADMIN-PC:1433;"
-                    + "database=ROOM;"
-                    + "user=sa;"
-                    + "password=123456789;"
-                    + "encrypt=false;"
-                    + "trustServerCertificate=false;"
-                    + "loginTimeout=30;";
 
     public boolean validateLogin(String username, String password) {
         Connection connection = null;
@@ -130,25 +123,5 @@ public class DatabaseHandler {
             }
         }
     }
-
-    public boolean saveRoomToDatabase(int id, String name, String type, String creator, String orderUser) {
-        try (Connection connection = DriverManager.getConnection(url1)) {
-            String query = "INSERT INTO Room (id, name, type, creator, otherUser) VALUES (?, ?, ?, ?, ?)";
-            try (PreparedStatement st = connection.prepareStatement(query)) {
-                st.setInt(1, id);
-                st.setString(2, name);
-                st.setString(3, type);
-                st.setString(4, creator);
-                st.setString(5, orderUser);
-
-                int rowsAffected = st.executeUpdate();
-                return rowsAffected > 0;
-            }
-        } catch (SQLException exception) {
-            exception.printStackTrace();
-            return false;
-        }
-    }
-
 
 }
