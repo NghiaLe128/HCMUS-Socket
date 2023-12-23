@@ -5,6 +5,7 @@
 ## I. Thông tin sinh viên
 - Mã số sinh viên: 21127116
 - Họ và tên: Nguyễn Lê Thanh Nghĩa
+- Email: nltnghia21@clc.fitus.edu.vn
 - Lớp: 21KTPM2 | Trường KHTN, ĐHQG TP. HCM
 - GV phụ trách: Nguyễn Văn Khiết (LT), Nguyễn Đức Huy (TG) Nguyễn Văn Vũ (TH)  <br>
 
